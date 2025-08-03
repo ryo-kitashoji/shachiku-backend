@@ -1,10 +1,11 @@
-# ShachikuAI - 言い訳生成API
+# ShachikuAI - 言い訳生成・自動返信API
 
-質問に対して丁寧で説得力のある言い訳を生成するFastAPI + ローカルLLMアプリケーション
+質問に対して丁寧で説得力のある言い訳を生成し、状況に応じた自動返信を提供するFastAPI + ローカルLLMアプリケーション
 
 ## 機能
 
 - 質問に対する自然な言い訳の生成
+- 状況に応じた自動返信の生成（断り、共感、距離を置く等）
 - ローカルLLM（DeepSeek等）の利用
 - ファインチューニング対応
 - FastAPIベースのRESTful API
@@ -16,13 +17,16 @@
 ShachikuAI/
 ├── api/                    # APIレイヤー
 │   └── v1/
-│       └── excuse_router.py
+│       ├── excuse_router.py
+│       └── reply_router.py
 ├── client/                 # クライアントレイヤー
 │   └── llm/
 │       └── model_client.py
 ├── service/                # サービスレイヤー
-│   └── excuse_generation/
-│       └── excuse_service.py
+│   ├── excuse_generation/
+│   │   └── excuse_service.py
+│   └── reply_generation/
+│       └── reply_service.py
 ├── models/                 # データモデル
 │   └── request_models.py
 ├── config/                 # 設定ファイル
@@ -109,11 +113,42 @@ curl -X POST "http://localhost:8000/v1/excuse/generate" \
 }
 ```
 
+### 自動返信生成エンドポイント
+
+```bash
+curl -X POST "http://localhost:8000/shatiku-ai/generate-reply" \
+     -H "Content-Type: application/json" \
+     -d '{
+       "settings": {
+         "userId": "user123",
+         "channel": "general",
+         "replyTo": "user456"
+       },
+       "mission": {
+         "instruction": "やんわり断る",
+         "goal": "断る"
+       },
+       "message": {
+         "content": "飲み会に参加しませんか？",
+         "timestamp": "2024-01-01T12:00:00Z"
+       }
+     }'
+```
+
+レスポンス例：
+```json
+{
+  "reply": "お忙しい中ご連絡いただきありがとうございます。申し訳ございませんが、今回は都合がつかないため参加が難しい状況です。またの機会がございましたら、ぜひよろしくお願いいたします。",
+  "replyAt": "2024-01-01T12:00:00Z"
+}
+```
+
 ### ヘルスチェック
 
 ```bash
 curl http://localhost:8000/health
 curl http://localhost:8000/v1/excuse/health
+curl http://localhost:8000/shatiku-ai/health
 ```
 
 ## ファインチューニング
@@ -162,6 +197,30 @@ MODEL_NAME=./data/models/fine_tuned
 - `question` (string): 入力された質問
 - `excuse` (string): 生成された言い訳
 - `confidence` (float): 信頼度スコア
+
+### POST /shatiku-ai/generate-reply
+
+自動返信を生成します。
+
+**リクエスト:**
+- `settings` (object, required): 設定情報
+  - `userId` (string): ユーザーID
+  - `channel` (string): チャンネル名
+  - `replyTo` (string): 返信先ユーザーID
+- `mission` (object, required): 返信のミッション
+  - `instruction` (string): 指示内容（例: "やんわり断る", "共感", "距離"）
+  - `goal` (string): 目標（例: "断る"）
+- `message` (object, required): メッセージ情報
+  - `content` (string): メッセージ内容
+  - `timestamp` (datetime): タイムスタンプ
+
+**レスポンス:**
+- `reply` (string): 生成された返信
+- `replyAt` (datetime): 返信時刻
+
+### GET /shatiku-ai/health
+
+自動返信サービスのヘルスチェックを行います。
 
 ## 開発
 
