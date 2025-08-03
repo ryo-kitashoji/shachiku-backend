@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from api.v1.excuse_router import router as excuse_router
+from api.v1.reply_router import router as reply_router
 import logging
 import os
 from dotenv import load_dotenv
@@ -30,6 +31,7 @@ app.add_middleware(
 )
 
 app.include_router(excuse_router)
+app.include_router(reply_router)
 
 @app.get("/")
 async def root():
