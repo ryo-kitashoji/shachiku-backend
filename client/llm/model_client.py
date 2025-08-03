@@ -48,12 +48,21 @@ class ModelClient:
             if self.device == "cpu":
                 self.model = self.model.to(self.device)
             
-            self.pipeline = pipeline(
-                "text-generation",
-                model=self.model,
-                tokenizer=self.tokenizer,
-                device=0 if self.device == "cuda" else -1
-            )
+            # accelerateでロードされている場合はdeviceを指定しない
+            pipeline_kwargs = {
+                "model": self.model,
+                "tokenizer": self.tokenizer
+            }
+            
+            # accelerateが使われていない場合のみdeviceを指定
+            try:
+                self.pipeline = pipeline("text-generation", **pipeline_kwargs)
+            except ValueError as e:
+                if "accelerate" not in str(e):
+                    # accelerate以外のエラーの場合は再発生
+                    raise
+                # accelerateが使われている場合はdeviceを指定せずに再試行
+                self.pipeline = pipeline("text-generation", **pipeline_kwargs)
             
             logger.info(f"モデルのロードが完了 (デバイス: {self.device})")
             
@@ -65,6 +74,7 @@ class ModelClient:
         self,
         prompt: str,
         max_length: int = 512,
+        max_new_tokens: int = None,
         temperature: float = 0.7,
         top_p: float = 0.9,
         do_sample: bool = True,
@@ -76,8 +86,11 @@ class ModelClient:
             
             logger.info(f"テキスト生成開始: {prompt[:50]}...")
             
+            # プロンプトの長さを取得
+            input_tokens = len(self.tokenizer.encode(prompt))
+            logger.info(f"プロンプトトークン数: {input_tokens}")
+            
             generation_config = {
-                "max_length": max_length,
                 "temperature": temperature,
                 "top_p": top_p,
                 "do_sample": do_sample,
@@ -86,6 +99,18 @@ class ModelClient:
                 "eos_token_id": self.tokenizer.eos_token_id,
                 "return_full_text": False
             }
+            
+            # max_new_tokensが指定されている場合はそれを使用、そうでなければmax_lengthを使用
+            if max_new_tokens is not None:
+                generation_config["max_new_tokens"] = max_new_tokens
+                logger.info(f"max_new_tokens使用: {max_new_tokens}")
+            else:
+                generation_config["max_length"] = max_length
+                logger.info(f"max_length使用: {max_length}")
+                if input_tokens >= max_length:
+                    logger.warning(f"プロンプトトークン数({input_tokens})がmax_length({max_length})以上です")
+                    generation_config["max_new_tokens"] = 50  # 最低限の生成を保証
+                    generation_config.pop("max_length")
             
             results = self.pipeline(prompt, **generation_config)
             

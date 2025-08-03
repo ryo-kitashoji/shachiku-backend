@@ -1,15 +1,31 @@
+# Core API dependencies
 fastapi==0.104.1
 uvicorn==0.24.0
 pydantic==2.5.0
-transformers==4.36.0
+python-dotenv==1.0.0
+python-multipart==0.0.6
+
+# Machine Learning dependencies
 torch==2.1.0
+transformers==4.36.0
 accelerate==0.25.0
+numpy==1.26.4
+protobuf==6.31.1
+
+# Fine-tuning dependencies (optional)
 datasets==2.15.0
 peft==0.7.1
 bitsandbytes==0.41.3
 sentencepiece==0.1.99
-python-multipart==0.0.6
-httpx==0.25.2
+
+# Additional utilities
+requests==2.32.4
+pyyaml==6.0.2
+pytz==2025.2
+attrs==25.3.0
+click==8.2.1
+
+# Development and testing
 pytest==7.4.3
 pytest-asyncio==0.21.1
-python-dotenv==1.0.0
+httpx==0.25.2

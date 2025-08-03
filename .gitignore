@@ -149,3 +149,31 @@ Thumbs.db
 
 # Claude Code settings
 .claude/settings.local.json
+
+# Machine Learning Models and Data
+data/models/*/
+*.bin
+*.safetensors
+*.pt
+*.pth
+*.ckpt
+*.h5
+*.model
+*.pkl
+*.pickle
+
+# Hugging Face cache
+.cache/huggingface/
+~/.cache/huggingface/
+
+# Training data and outputs
+data/training/*/
+data/fine_tuned/*/
+training_logs/
+checkpoints/
+wandb/
+
+# API keys and secrets
+.env.local
+.env.production
+secrets/
