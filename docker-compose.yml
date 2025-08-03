@@ -3,22 +3,58 @@ version: '3.8'
 services:
   shachiku-ai:
     build: .
+    container_name: shachiku-ai-api
     ports:
       - "8000:8000"
     volumes:
       - ./data:/app/data
       - ./logs:/app/logs
+      - model_cache:/root/.cache/huggingface  # Hugging Faceキャッシュ
     environment:
-      - MODEL_NAME=microsoft/DialoGPT-medium
-      - MODEL_PATH=/app/data/models
+      # モデル設定
+      - MODEL_NAME=rinna/japanese-gpt-1b
+      - MODEL_PATH=/app/data/models/japanese-reply-model-1b
+      
+      # 生成パラメータ
+      - MAX_LENGTH=512
+      - TEMPERATURE=0.7
+      - TOP_P=0.9
+      
+      # API設定
       - API_HOST=0.0.0.0
       - API_PORT=8000
+      
+      # ファインチューニング設定
       - FINE_TUNE_ENABLED=true
       - FINE_TUNE_DATA_PATH=/app/data/training/excuses.jsonl
+      
+      # Hugging Face設定
+      - HF_HOME=/root/.cache/huggingface
+      - TRANSFORMERS_CACHE=/root/.cache/huggingface
+    
+    # GPUサポート（NVIDIA Container Toolkit必須）
+    # 使用する場合は以下のコメントアウトを解除
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices:
+    #         - driver: nvidia
+    #           count: 1
+    #           capabilities: [gpu]
+    
     restart: unless-stopped
+    
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
       interval: 30s
       timeout: 10s
       retries: 3
-      start_period: 40s
+      start_period: 240s  # モデルダウンロード時間を考慮
+    
+    # リソース制限
+    mem_limit: 8g
+    memswap_limit: 8g
+
+volumes:
+  model_cache:
+    driver: local

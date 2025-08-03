@@ -2,14 +2,22 @@
 
 質問に対して丁寧で説得力のある言い訳を生成し、状況に応じた自動返信を提供するFastAPI + ローカルLLMアプリケーション
 
+## 🚀 新機能
+
+✨ **AI返信生成機能を実装しました！**
+- 日本語GPT-1Bモデル（rinna/japanese-gpt-1b）による高品質な返信生成
+- やんわり断る、共感する、距離を保つなど、様々な対応方針に対応
+- フォールバック機能付きで安定動作
+
 ## 機能
 
-- 質問に対する自然な言い訳の生成
-- 状況に応じた自動返信の生成（断り、共感、距離を置く等）
-- ローカルLLM（DeepSeek等）の利用
-- ファインチューニング対応
-- FastAPIベースのRESTful API
-- Docker対応
+- 📝 **言い訳生成**: 質問に対する自然で説得力のある言い訳を生成
+- 🤖 **AI自動返信**: 状況に応じた適切な返信を生成（断り、共感、距離を置く等）
+- 🧠 **ローカルLLM**: 日本語対応の高品質なモデル（rinna/japanese-gpt-1b）
+- 🔧 **ファインチューニング対応**: カスタムデータでのモデル改善
+- 🌐 **FastAPI**: 高性能なRESTful API
+- 🐳 **Docker対応**: 簡単なデプロイとスケーリング
+- 📊 **信頼度スコア**: 生成された返信の品質評価
 
 ## プロジェクト構造
 
@@ -49,45 +57,96 @@ ShachikuAI/
 └── .env                    # 環境変数
 ```
 
-## セットアップ
+## 🛠️ セットアップ
 
-### 1. 依存関係のインストール
+### 前提条件
+
+- Python 3.8+
+- CUDA対応GPU（推奨、CPUでも動作可能）
+- 8GB以上のRAM
+- 10GB以上の空きディスク容量
+
+### 1. リポジトリのクローン
+
+```bash
+git clone https://github.com/your-username/ShachikuAI.git
+cd ShachikuAI
+```
+
+### 2. 仮想環境の作成（推奨）
+
+```bash
+python -m venv venv
+source venv/bin/activate  # Windows: venv\Scripts\activate
+```
+
+### 3. 依存関係のインストール
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### 2. 環境変数の設定
+### 4. 環境変数の設定
 
-`.env`ファイルを編集して設定を調整：
+`.env`ファイルを編集（初回起動時に自動的にモデルがダウンロードされます）：
 
 ```env
-MODEL_NAME=microsoft/DialoGPT-medium
-MODEL_PATH=./data/models
+# モデル設定
+MODEL_NAME=rinna/japanese-gpt-1b
+MODEL_PATH=./data/models/japanese-reply-model-1b
+
+# 生成パラメータ
 MAX_LENGTH=512
 TEMPERATURE=0.7
 TOP_P=0.9
+
+# API設定
 API_HOST=0.0.0.0
 API_PORT=8000
+
+# ファインチューニング設定
+FINE_TUNE_ENABLED=true
+FINE_TUNE_DATA_PATH=./data/training/excuses.jsonl
 ```
 
-### 3. APIの起動
+### 5. ディレクトリ構造の準備
 
 ```bash
+mkdir -p data/models data/training
+```
+
+### 6. APIの起動
+
+```bash
+# 開発モード（自動リロード付き）
 python main.py
-```
 
-または
-
-```bash
+# または uvicorn で直接起動
 uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 ```
 
-### 4. Docker での起動
+### 7. 動作確認
+
+```bash
+# ヘルスチェック
+curl http://localhost:8000/health
+
+# API ドキュメントにアクセス
+open http://localhost:8000/docs
+```
+
+### 8. Docker での起動（オプション）
 
 ```bash
 docker-compose up --build
 ```
+
+## ⚠️ 重要な注意事項
+
+1. **初回起動時**: 日本語GPT-1Bモデル（約5GB）が自動的にダウンロードされます
+2. **メモリ要件**: GPUメモリ4GB以上推奨、CPUの場合は8GB以上のRAM
+3. **モデルファイル**: `.gitignore`によりモデルファイルはGitで管理されません
+4. **セキュリティ**: 本番環境では`.env`ファイルの権限設定に注意してください
 
 ## API利用方法
 
